@@ -12,7 +12,7 @@ public class LocationWeatherController {
     private final WelcomeService welcomeService;
 
     @Autowired
-    public AppController(WelcomeService welcomeService) {
+    public LocationWeatherController(WelcomeService welcomeService) {
         this.welcomeService = welcomeService;
     }
 

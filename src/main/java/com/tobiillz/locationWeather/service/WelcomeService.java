@@ -4,6 +4,7 @@ import com.tobiillz.locationWeather.dtos.WelcomeResponse;
 import com.tobiillz.locationWeather.handler.NameNotFoundException;
 import com.tobiillz.locationWeather.model.GeoLocation;
 import com.tobiillz.locationWeather.model.Weather;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import org.springframework.web.client.RestTemplate;
 import javax.servlet.http.HttpServletRequest;
 
 @Service
+@Slf4j
 public class WelcomeService {
 
 
@@ -41,24 +43,37 @@ public class WelcomeService {
         if (visitor.isEmpty()) {
             throw new NameNotFoundException("Sorry, 'visitor_name' query parameter cannot be empty");
         }
+
         String realIpAddress = ipAddress != null ? ipAddress : request.getRemoteAddr();
 
         GeoLocation geoLocation = getGeo(realIpAddress);
 
         double lat = geoLocation.getLatitude();
         double lon = geoLocation.getLongitude();
+        String ip_address = geoLocation.getIp();
+
+        log.info("latitude " + lat);
+        log.info("longitude " + lon);
+        log.info("IPADDRESS " + ip_address);
 
         Weather weather = getWeather(lat, lon, WeatherMapApiKey);
-        Double temp = (Double) weather.getMain().get("temp");
-        String city = weather.getName();
+        double temp = (double) weather.getMain().get("temp");
+        String city = geoLocation.getCity();
+        String state = geoLocation.getState_prov();
+        String country = geoLocation.getCountry_name();
         String sanitizedName = visitor.replaceAll("\"", "").trim();
 
-        return new WelcomeResponse(realIpAddress, city,"Hello, " + sanitizedName + "!, the temperature is " + temp + " degrees Celsius in " + city);
+        return new WelcomeResponse(
+                ip_address,
+                city + "," + state,
+                "Hello, " + sanitizedName + "!, the temperature is " + temp + " degrees Celsius in " + city + "," + state + " " + country
+        );
     }
 
     public GeoLocation getGeo(String ip) {
-        String locationUrl = String.format("https://api.ip2location.io/?key=%s&ip=%s", ipGeolocationApiKey, ip);
+        String locationUrl = String.format("https://api.ipgeolocation.io/ipgeo?apiKey=%s", ipGeolocationApiKey, ip);
 
+        log.info("log>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " + locationUrl);
         return restTemplate.getForObject(locationUrl, GeoLocation.class);
     }
 
