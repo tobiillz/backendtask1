@@ -44,7 +44,7 @@ public class WelcomeService {
             throw new NameNotFoundException("Sorry, 'visitor_name' query parameter cannot be empty");
         }
 
-        String realIpAddress = ipAddress != null ? ipAddress : request.getRemoteAddr();
+        String realIpAddress = ipAddress != null ? ipAddress : getClientIpAddress(request);
 
         GeoLocation geoLocation = getGeo(realIpAddress);
 
@@ -68,6 +68,14 @@ public class WelcomeService {
                 city + "," + state,
                 "Hello, " + sanitizedName + "!, the temperature is " + temp + " degrees Celsius in " + city + "," + state + " " + country
         );
+    }
+
+    private String getClientIpAddress(HttpServletRequest request) {
+        String header = request.getHeader("X-Forwarded-For");
+        if (header == null || header.isEmpty()) {
+            return request.getRemoteAddr();
+        }
+        return header.split(",")[0];
     }
 
     public GeoLocation getGeo(String ip) {
